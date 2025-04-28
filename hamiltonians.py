@@ -1,6 +1,6 @@
 import utils
 import numpy as np
-from scipy.sparse import csr_array, kron, eye, linalg
+from scipy.sparse import csr_array, kron, eye_array, linalg
 
 class Hamiltonian:
     def __init__(self, n, spin='1'):
@@ -18,7 +18,7 @@ class Hamiltonian:
         self._matrix = csr_array((utils.spin_states[spin]**self._n, 
             utils.spin_states[spin]**self._n), dtype=np.complex128)
         self._kroned_identities = [ 
-                eye(utils.spin_states[spin]**i) for i in range(0,n)
+                eye_array(utils.spin_states[spin]**i, format="csr") for i in range(0,n)
             ]
         self._gstate = None # ground state
 
@@ -35,7 +35,6 @@ class Hamiltonian:
     def gstate(self) -> np.array:
         if self._gstate is None:
             self._gstate = linalg.eigsh(self._matrix, k=1, which='SA')[1][:,0] 
-            self._gstate = self._gstate / np.linalg.norm(self._gstate)
         return self._gstate
     
     def kroned_identity(self, index) -> csr_array:        
@@ -47,7 +46,7 @@ class Hamiltonian:
         kron(operator, self.kroned_identity(self.n - 2 - i))
     )
 
-    def _cyclical_term(self, operator):
+    def _cyclical_term(self, operator) -> csr_array:
         return kron(
             operator, kron(
             self.kroned_identity(self.n - 2),
@@ -81,7 +80,7 @@ class BondAlternatingXXZ(Hamiltonian):
             coeff = 1 - delta * (-1)**(l+1)
             self._matrix += coeff*self._build_term(l, utils.spin_operators[spin]['Sx'])   # S_l^x S_{l+1}^x term
             self._matrix += coeff*self._build_term(l, utils.spin_operators[spin]['Sy'])   # S_l^y S_{l+1}^y term
-            self._matrix += Delta*coeff*self._build_term(l, utils.spin_operators[spin]['Sz']) # Δ (S_l^z S_{l+1}^z) term
+            self._matrix += Delta*coeff*self._build_term(l, utils.spin_operators[spin]['Sz']) # Δ(S_l^z S_{l+1}^z) term
 
         # Cyclical terms
         coeff = 1 - delta * (-1)**n
@@ -180,13 +179,18 @@ class BilinearBiquadratic(Hamiltonian):
             Y_term = self._build_term(l, utils.spin_operators[spin]['Sy'])
             Z_term = self._build_term(l, utils.spin_operators[spin]['Sz'])
 
-
-            # linear and quadratic terms
+            # linear and pure quadratic terms
             self._matrix += arg1*X_term + arg2*(X_term @ X_term)    # S_l^x S_{l+1}^x term
             self._matrix += arg1*Y_term + arg2*(Y_term @ Y_term)   # S_l^y S_{l+1}^y term
             self._matrix += arg1*Z_term + arg2*(Z_term @ Z_term)   # S_l^z S_{l+1}^z term
-            #quadratic
             
+            # Mixed quadratic terms
+            self._matrix += arg2*(X_term @ Y_term + Y_term @ X_term) 
+            self._matrix += arg2*(X_term @ Z_term + Z_term @ X_term)
+            self._matrix += arg2*(Y_term @ Z_term + Z_term @ Y_term)
+
+
+
         # Cyclical terms
         X_term = self._cyclical_term(utils.spin_operators[spin]['Sx'])
         Y_term = self._cyclical_term(utils.spin_operators[spin]['Sy'])
@@ -195,6 +199,10 @@ class BilinearBiquadratic(Hamiltonian):
         self._matrix += arg1*X_term + arg2*(X_term @ X_term) # S_N^x S_1^x term
         self._matrix += arg1*Y_term + arg2*(Y_term @ Y_term) # S_N^y S_1^y term
         self._matrix += arg1*Z_term + arg2*(Z_term @ Z_term) # S_N^z S_1^z term
+
+        self._matrix += arg2*(X_term @ Y_term + Y_term @ X_term) 
+        self._matrix += arg2*(X_term @ Z_term + Z_term @ X_term)
+        self._matrix += arg2*(Y_term @ Z_term + Z_term @ Y_term)
 
     @property
     def theta(self):

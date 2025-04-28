@@ -15,7 +15,7 @@ spin_states = {
 
 spin_operators = {
     '1': {
-        'Sz' : csr_array( np.array([[1,0,0],
+        'Sz' : csr_array( np.array( [[1,0,0],
                                      [0,0,0],
                                      [0,0,-1]])),
         
@@ -23,19 +23,19 @@ spin_operators = {
                                      [0,0,0],
                                      [0,0,1]])),
         
-        'Sx' : csr_array(1/np.sqrt(2)*np.array([[0,1,0],
+        'Sx' : csr_array(1/np.sqrt(2)*np.array( [[0,1,0],
                                                  [1,0,1],
                                                  [0,1,0]])),
         
-        'Sx2' : csr_array(np.array([[0.5,0,0.5],
+        'Sx2' : csr_array(np.array( [[0.5,0,0.5],
                                      [0 , 1 , 0],
                                      [0.5,0,0.5]])),
         
-        'Sy' : csr_array(1j/np.sqrt(2)*np.array([[0,-1,0],
+        'Sy' : csr_array(1j/np.sqrt(2)*np.array( [[0,-1,0],
                                                   [1,0,-1],
                                                   [0, 1,0]])),
         
-        'Sy2' : csr_array(np.array([[.5,0,-.5],
+        'Sy2' : csr_array(np.array( [[.5,0,-.5],
                                      [0 , 1 ,0],
                                      [-.5,0,.5]])),
     },
