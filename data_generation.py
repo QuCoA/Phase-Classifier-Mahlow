@@ -1,18 +1,21 @@
 import numpy as np
 import hamiltonians as h
 import correlators as c
-from tqdm import tqdm # for progress bar
+import multiprocessing as mp
+import itertools as it
+from tqdm import tqdm
 from timeit import default_timer as timer
 from datetime import datetime
 from sys import argv
 
-def generate_data(N, to_generate = ['H1', 'H2', 'H3']):
-
-    t1, t2, t3 = -1, -1, -1
-
+def generate_data(N, n_cores, to_generate = ['H1', 'H2', 'H3']):
+    
+    T = [-1, -1, -1]
+    corr = c.Correlators(N)
+    n_sup = int(N/2+1)
     ###########################################
-    H_1_parameters = np.arange(-4, 4, 0.1)
-    Jzs, Ds = H_1_parameters, H_1_parameters
+    Jzs, Ds = np.arange(-4, 4, 0.1), np.arange(-4, 4, 0.1)
+    H1_params = it.product([N], Jzs, Ds, [corr], [n_sup])
 
     
     # H2 parameters
@@ -21,103 +24,131 @@ def generate_data(N, to_generate = ['H1', 'H2', 'H3']):
 
     deltas = np.arange(0, 1, 0.0125)
     Deltas = np.arange(-1.5,2.5, 0.05)
+    H2_params = it.product([N], Deltas, deltas, [corr], [n_sup])
 
     # H3 parameters
     thetas = np.arange(0,2*np.pi,0.001*np.pi)
+    H3_params = it.product([N], thetas, [corr], [n_sup])
 
     ##########################################
 
-    corr = c.Correlators(N)
-    n_sup = int(N/2+1)
-
     if 'H1' in to_generate:
+        lines = []
         start = timer()
+        with mp.Pool(n_cores) as pool:
+            lines = list(tqdm(pool.imap(gen_H1, H1_params), total=len(Jzs)*len(Ds), desc="Calculating H1 correlations"))
+            
         with open(f"data/H1/N={N}.csv", 'w') as fh:
             fh.write("Jz, D, " + ", ".join([f"S1S{i}{j}" for i in range(1, n_sup+1) for j in ['x', 'y', 'z']]) + ", "+
             ", ".join([f"prodSi{j}" for j in ['x', 'y', 'z']]))
+            fh.writelines(lines)
 
-            for Jz in tqdm(Jzs, desc="Solving H1 correlations"):
-                for D in Ds:
-                    line = [Jz, D]
-                    try: 
-                        H1 = h.XXZUniaxialSingleIonAnisotropy(N, Jz, D)
-                        gstate = H1.gstate
-                    except: 
-                        continue  
-                    gstate_dagg = np.conj(gstate).T
-                    for i in range(n_sup):
-                        line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
-                        line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
-                        line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
-                    
-                    line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
-                    line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
-                    line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
-
-                    fh.write("\n"+", ".join([str(i) for i in line]))
-        t1 = timer() - start
+        T[0]= timer() - start
 
     if 'H2' in to_generate:
+        lines = []
         start = timer()
+        with mp.Pool(n_cores) as pool:
+            lines = list(tqdm((pool.imap(gen_H2,H2_params)), total=len(Deltas)*len(deltas), desc="Calculating H2 correlations"))
         with open(f"data/H2/N={N}.csv", 'w') as fh:
             fh.write("Delta, delta, " + ", ".join([f"S1S{i}{j}" for i in range(1, n_sup+1) for j in ['x', 'y', 'z']]) + ", "+
             ", ".join([f"prodSi{j}" for j in ['x', 'y', 'z']]))
+            fh.writelines(lines)
 
-
-            for Delta in tqdm(Deltas, desc="Solving H2 correlations"):
-                for delta in deltas:
-                    line = [Delta, delta]
-                    try:
-                        H2 = h.BondAlternatingXXZ(N, Delta, delta)
-                        gstate = H2.gstate
-                    except:
-                        continue 
-                    gstate_dagg = np.conj(gstate).T
-                    for i in range(n_sup):
-                        line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
-                        line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
-                        line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
-                    
-                    line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
-                    line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
-                    line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
-
-                    fh.write("\n"+", ".join([str(i) for i in line]))
-        t2 = timer() - start
+        T[1] = timer() - start
     
     if 'H3' in to_generate:
         start = timer()
+        lines = []
+        test = lambda x: print(x)
+        with mp.Pool(n_cores) as pool:
+            lines = list(tqdm(pool.imap(gen_H3,H3_params), total=len(thetas), desc="Calculating H3 correlations"))
+            pass
         with open(f"data/H3/N={N}.csv", 'w') as fh:
             fh.write("theta, -1, " + ", ".join([f"S1S{i}{j}" for i in range(1, n_sup+1) for j in ['x', 'y', 'z']]) + ", "+
             ", ".join([f"prodSi{j}" for j in ['x', 'y', 'z']]))
+            fh.writelines(lines)
+        
+        T[2] = timer() - start
 
+    return T
 
-            for theta in tqdm(thetas, desc="Solving H3 correlations"):
-                line = [theta, -1]
-                try:
-                    H3 = h.BilinearBiquadratic(N, theta)
-                    gstate = H3.gstate
-                except:
-                    continue
-                gstate_dagg = np.conj(gstate).T
-                for i in range(n_sup):
-                    line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
-                    line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
-                    line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
+def gen_H1(args):
+    N, Jz, D, corr, n_sup = args
+    line = [Jz, D]
+    try: 
+        H1 = h.XXZUniaxialSingleIonAnisotropy(N, Jz, D)
+        gstate = H1.gstate
+    except: return ""
+      
+    gstate_dagg = np.conj(gstate).T
+    for i in range(n_sup):
+        line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
+        line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
+        line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
                     
-                line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
-                line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
-                line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
-            
-                fh.write("\n"+", ".join([str(i) for i in line]))
-        t3 = timer() - start
+    line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
+    line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
+    line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
 
-    return t1, t2, t3
+    return "\n"+", ".join([str(i) for i in line])
+
+def gen_H2(args):
+    N, Delta, delta, corr, n_sup = args
+    line = [Delta, delta]
+    try:
+        H2 = h.BondAlternatingXXZ(N, Delta, delta)
+        gstate = H2.gstate
+    except: return ""
+
+    gstate_dagg = np.conj(gstate).T
+    for i in range(n_sup):
+        print(i)
+        line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
+        line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
+        line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
+                    
+    line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
+    line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
+    line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
+
+    return "\n"+", ".join([str(i) for i in line])
+
+def gen_H3(args):
+        N, theta, corr, n_sup = args
+        line = [theta, -1]
+        
+        try:
+            H3 = h.BilinearBiquadratic(N, theta)
+            gstate = H3.gstate
+        except: return ""
+
+        gstate_dagg = np.conj(gstate).T
+        for i in range(n_sup):
+            line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
+            line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
+            line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
+                    
+        line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
+        line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
+        line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))            
+        return "\n"+", ".join([str(i) for i in line])
 
 N = int(argv[1]) if len(argv) > 1 else 8
-to_generate = argv[2:] if (len(argv) > 2) and (len(argv) < 6) else ['H1', 'H2', 'H3']
+n_cores = int(argv[2]) if len(argv) > 2 else 2
+if n_cores > mp.cpu_count(): n_cores = int(mp.cpu_count()/2)
+to_generate = argv[3:] if (len(argv) > 3) and (len(argv) < 7) else ['H1', 'H2', 'H3']
 
-t1, t2, t3 = generate_data(N, to_generate)
+print(f"""
+      This program is set to calculate a {N}-chain spin-1
+      correlation matrix for the following hamiltonians:
+      {to_generate}.
+      
+      To do so, it is going to use {n_cores} of your CPUs.
+      """)
+
+t1, t2, t3 = generate_data(N, n_cores, to_generate)
+
 with open('data/DataRuntime.dat', 'a') as fh:
     fh.write(f"{N}, {t1}, {t2}, {t3}, {datetime.today().strftime('%Y-%m-%d')} \n")
     
