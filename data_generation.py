@@ -7,26 +7,23 @@ from tqdm import tqdm
 from timeit import default_timer as timer
 from datetime import datetime
 from sys import argv
+import os
 
 def generate_data(N, n_cores, to_generate = ['H1', 'H2', 'H3']):
-    
+        
     T = [-1, -1, -1]
     corr = c.Correlators(N)
     n_sup = int(N/2+1)
-    ###########################################
+    
+    ############### PARAMETERS ###############
+    
     Jzs, Ds = np.arange(-4, 4, 0.1), np.arange(-4, 4, 0.1)
     H1_params = it.product([N], Jzs, Ds, [corr], [n_sup])
-
-    
-    # H2 parameters
-    # I'm pretty sure that the original article
-    # is wrong here.
 
     deltas = np.arange(0, 1, 0.0125)
     Deltas = np.arange(-1.5,2.5, 0.05)
     H2_params = it.product([N], Deltas, deltas, [corr], [n_sup])
 
-    # H3 parameters
     thetas = np.arange(0,2*np.pi,0.001*np.pi)
     H3_params = it.product([N], thetas, [corr], [n_sup])
 
@@ -134,22 +131,32 @@ def gen_H3(args):
         line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))            
         return "\n"+", ".join([str(i) for i in line])
 
-N = int(argv[1]) if len(argv) > 1 else 8
-n_cores = int(argv[2]) if len(argv) > 2 else 2
-if n_cores > mp.cpu_count(): n_cores = int(mp.cpu_count()/2)
-to_generate = argv[3:] if (len(argv) > 3) and (len(argv) < 7) else ['H1', 'H2', 'H3']
-
-print(f"""
-      This program is set to calculate a {N}-chain spin-1
-      correlation matrix for the following hamiltonians:
-      {to_generate}.
-      
-      To do so, it is going to use {n_cores} of your CPUs.
-      """)
-
-t1, t2, t3 = generate_data(N, n_cores, to_generate)
-
-with open('data/DataRuntime.dat', 'a') as fh:
-    fh.write(f"{N}, {t1}, {t2}, {t3}, {datetime.today().strftime('%Y-%m-%d')} \n")
+if __name__ == "__main__":    
     
-print(f"\nData successfuly generated.\nIt took: {t1 + t2 + t3} seconds") 
+    N = int(argv[1]) if len(argv) > 1 else 8
+    n_cores = int(argv[2]) if len(argv) > 2 else 2
+    if n_cores > mp.cpu_count(): n_cores = int(mp.cpu_count()/2)
+    to_generate = argv[3:] if (len(argv) > 3) and (len(argv) < 7) else ['H1', 'H2', 'H3']
+
+    if not os.path.exists('data'): os.makedirs('data')
+    if not os.path.exists('data/H1'): os.makedirs('data/H1')
+    if not os.path.exists('data/H2'): os.makedirs('data/H2')
+    if not os.path.exists('data/H3'): os.makedirs('data/H3')
+    if not os.path.exists('data/DataRuntime.dat'):
+        with open('data/DataRuntime.dat', 'w') as fh:
+            fh.write("N, n_cores, H1, H2, H3, Date \n")
+
+    print(f"""
+        This program is set to calculate a {N}-chain spin-1
+        correlation matrix for the following hamiltonians:
+        {to_generate}.
+        
+        To do so, it is going to use {n_cores} of your CPUs.
+        """)
+
+    t1, t2, t3 = generate_data(N, n_cores, to_generate)
+
+    with open('data/DataRuntime.dat', 'a') as fh:
+        fh.write(f"{N}, {n_cores} , {t1}, {t2}, {t3}, {datetime.today().strftime('%Y-%m-%d')} \n")
+        
+    print(f"\nData successfuly generated.\nIt took: {t1 + t2 + t3} seconds") 

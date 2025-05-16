@@ -1,6 +1,6 @@
 import utils
 import numpy as np
-from scipy.sparse import csr_array, kron, eye_array, linalg
+from scipy.sparse import csr_matrix, kron, eye, linalg
 
 class Hamiltonian:
     def __init__(self, n, spin='1'):
@@ -15,10 +15,10 @@ class Hamiltonian:
 
         self._n = n
         self._spin = spin
-        self._matrix = csr_array((utils.spin_states[spin]**self._n, 
+        self._matrix = csr_matrix((utils.spin_states[spin]**self._n, 
             utils.spin_states[spin]**self._n), dtype=np.complex128)
         self._kroned_identities = [ 
-                eye_array(utils.spin_states[spin]**i, format="csr") for i in range(0,n)
+                eye(utils.spin_states[spin]**i, format="csr") for i in range(0,n)
             ]
         self._gstate = None # ground state
 
@@ -37,7 +37,7 @@ class Hamiltonian:
             self._gstate = linalg.eigsh(self._matrix, k=1, which='SA')[1][:,0] 
         return self._gstate
     
-    def kroned_identity(self, index) -> csr_array:        
+    def kroned_identity(self, index) -> csr_matrix:        
         return self._kroned_identities[index]
 
     def _build_term(self, i, operator):
@@ -46,7 +46,7 @@ class Hamiltonian:
         kron(operator, self.kroned_identity(self.n - 2 - i))
     )
 
-    def _cyclical_term(self, operator) -> csr_array:
+    def _cyclical_term(self, operator) -> csr_matrix:
         return kron(
             operator, kron(
             self.kroned_identity(self.n - 2),
