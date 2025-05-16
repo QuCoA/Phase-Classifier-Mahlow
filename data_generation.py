@@ -57,7 +57,6 @@ def generate_data(N, n_cores, to_generate = ['H1', 'H2', 'H3']):
     if 'H3' in to_generate:
         start = timer()
         lines = []
-        test = lambda x: print(x)
         with mp.Pool(n_cores) as pool:
             lines = list(tqdm(pool.imap(gen_H3,H3_params), total=len(thetas), desc="Calculating H3 correlations"))
             pass
@@ -78,15 +77,14 @@ def gen_H1(args):
         gstate = H1.gstate
     except: return ""
       
-    gstate_dagg = np.conj(gstate).T
     for i in range(n_sup):
-        line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
-        line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
-        line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
+        line.append(np.real(np.vdot(gstate, corr.S1Six(i) @ gstate)))
+        line.append(np.real(np.vdot(gstate, corr.S1Siy(i) @ gstate)))
+        line.append(np.real(np.vdot(gstate, corr.S1Siz(i) @ gstate)))
                     
-    line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
-    line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
-    line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
+    line.append(np.real(np.vdot(gstate, corr.prodSix @ gstate)))
+    line.append(np.real(np.vdot(gstate, corr.prodSiy @ gstate)))
+    line.append(np.real(np.vdot(gstate, corr.prodSiz @ gstate)))
 
     return "\n"+", ".join([str(i) for i in line])
 
@@ -98,16 +96,14 @@ def gen_H2(args):
         gstate = H2.gstate
     except: return ""
 
-    gstate_dagg = np.conj(gstate).T
     for i in range(n_sup):
-        print(i)
-        line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
-        line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
-        line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
+        line.append(np.real(np.vdot(gstate, corr.S1Six(i) @ gstate)))
+        line.append(np.real(np.vdot(gstate, corr.S1Siy(i) @ gstate)))
+        line.append(np.real(np.vdot(gstate, corr.S1Siz(i) @ gstate)))
                     
-    line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
-    line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
-    line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))
+    line.append(np.real(np.vdot(gstate, corr.prodSix @ gstate)))
+    line.append(np.real(np.vdot(gstate, corr.prodSiy @ gstate)))
+    line.append(np.real(np.vdot(gstate, corr.prodSiz @ gstate)))
 
     return "\n"+", ".join([str(i) for i in line])
 
@@ -120,15 +116,14 @@ def gen_H3(args):
             gstate = H3.gstate
         except: return ""
 
-        gstate_dagg = np.conj(gstate).T
         for i in range(n_sup):
-            line.append(np.real(gstate_dagg @ corr.S1Six(i) @ gstate))
-            line.append(np.real(gstate_dagg @ corr.S1Siy(i) @ gstate))
-            line.append(np.real(gstate_dagg @ corr.S1Siz(i) @ gstate))
+            line.append(np.real(np.vdot(gstate, corr.S1Six(i) @ gstate)))
+            line.append(np.real(np.vdot(gstate, corr.S1Siy(i) @ gstate)))
+            line.append(np.real(np.vdot(gstate, corr.S1Siz(i) @ gstate)))
                     
-        line.append(np.real(gstate_dagg @ corr.prodSix @ gstate))
-        line.append(np.real(gstate_dagg @ corr.prodSiy @ gstate))
-        line.append(np.real(gstate_dagg @ corr.prodSiz @ gstate))            
+        line.append(np.real(np.vdot(gstate, corr.prodSix @ gstate)))
+        line.append(np.real(np.vdot(gstate, corr.prodSiy @ gstate)))
+        line.append(np.real(np.vdot(gstate, corr.prodSiz @ gstate)))            
         return "\n"+", ".join([str(i) for i in line])
 
 if __name__ == "__main__":    
