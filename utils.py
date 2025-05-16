@@ -17,27 +17,27 @@ spin_operators = {
     '1': {
         'Sz' : csr_matrix( np.array( [[1,0,0],
                                      [0,0,0],
-                                     [0,0,-1]])),
+                                     [0,0,-1]]), dtype=np.complex128),
         
         'Sz2' : csr_matrix(np.array([[1,0,0],
                                      [0,0,0],
-                                     [0,0,1]])),
+                                     [0,0,1]]), dtype=np.complex128),
         
         'Sx' : csr_matrix(1/np.sqrt(2)*np.array( [[0,1,0],
                                                  [1,0,1],
-                                                 [0,1,0]])),
+                                                 [0,1,0]]), dtype=np.complex128),
         
         'Sx2' : csr_matrix(np.array( [[0.5,0,0.5],
                                      [0 , 1 , 0],
-                                     [0.5,0,0.5]])),
+                                     [0.5,0,0.5]]), dtype=np.complex128),
         
         'Sy' : csr_matrix(1j/np.sqrt(2)*np.array( [[0,-1,0],
                                                   [1,0,-1],
-                                                  [0, 1,0]])),
+                                                  [0, 1,0]]), dtype=np.complex128),
         
         'Sy2' : csr_matrix(np.array( [[.5,0,-.5],
                                      [0 , 1 ,0],
-                                     [-.5,0,.5]])),
+                                     [-.5,0,.5]]), dtype=np.complex128),
     },
 
     '1/2': {
