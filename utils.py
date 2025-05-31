@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-def SpatialSignScaling(X: np.array) -> np.array:
+def SpatialSignScaling(X: np.ndarray) -> np.ndarray:
     X = X - np.mean(X, axis=1, keepdims=True)
     for i in range(len(X[0,:])):
         X[i,:] = X[i,:]/np.linalg.norm(X[i,:])

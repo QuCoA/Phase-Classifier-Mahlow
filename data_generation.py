@@ -11,7 +11,7 @@ import os
 
 def generate_data(N, n_cores, to_generate = ['H1', 'H2', 'H3']):
         
-    T = [-1, -1, -1]
+    T = [-1., -1., -1.]
     corr = c.Correlators(N)
     n_sup = int(N/2+1)
     
@@ -94,7 +94,7 @@ def gen_H2(args):
     try:
         H2 = h.BondAlternatingXXZ(N, Delta, delta)
         gstate = H2.gstate
-    except: return ""
+    except: return "" 
 
     for i in range(n_sup):
         line.append(np.real(np.vdot(gstate, corr.S1Six(i) @ gstate)))

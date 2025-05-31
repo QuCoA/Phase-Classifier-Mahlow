@@ -32,6 +32,7 @@ The project includes three quantum spin chain models:
 - Pandas
 - Scikit-learn
 - Matplotlib
+- tqdm
 
 ## Author
 Edgard

@@ -30,9 +30,9 @@ class Hamiltonian:
         return self._spin
     @property
     def matrix_dim(self) -> int:
-        return self._matrix.shape[0]
+        return self._matrix.shape[0] # type: ignore
     @property
-    def gstate(self) -> np.array:
+    def gstate(self) -> np.ndarray:
         if self._gstate is None:
             self._gstate = linalg.eigsh(self._matrix, k=1, which='SA')[1][:,0] 
         return self._gstate
@@ -40,18 +40,18 @@ class Hamiltonian:
     def kroned_identity(self, index) -> csr_matrix:        
         return self._kroned_identities[index]
 
-    def _build_term(self, i, operator):
-        return kron(
+    def _build_term(self, i, operator) -> csr_matrix:
+        return csr_matrix(kron(
         kron(self.kroned_identity(i), operator),
         kron(operator, self.kroned_identity(self.n - 2 - i))
-    )
+    ))
 
     def _cyclical_term(self, operator) -> csr_matrix:
-        return kron(
+        return csr_matrix(kron(
             operator, kron(
             self.kroned_identity(self.n - 2),
             operator)
-        )
+        ))
 
     def __str__(self):
         return f"Hamiltonian of {self.n} spins of value {self.spin}"
@@ -77,13 +77,13 @@ class BondAlternatingXXZ(Hamiltonian):
 
         # Build the Hamiltonian matrix for the non-cyclic terms
         for l in range(n-1):
-            coeff = 1 - delta * (-1)**(l+1)
+            coeff = 1 - delta * (-1)**(l)
             self._matrix += coeff*self._build_term(l, utils.spin_operators[spin]['Sx'])   # S_l^x S_{l+1}^x term
             self._matrix += coeff*self._build_term(l, utils.spin_operators[spin]['Sy'])   # S_l^y S_{l+1}^y term
             self._matrix += Delta*coeff*self._build_term(l, utils.spin_operators[spin]['Sz']) # Δ(S_l^z S_{l+1}^z) term
 
         # Cyclical terms
-        coeff = 1 - delta * (-1)**n
+        coeff = 1 - delta * (-1)**(n-1)
         self._matrix += coeff*self._cyclical_term(utils.spin_operators[spin]['Sx'])  # S_N^x S_1^x term
         self._matrix += coeff*self._cyclical_term(utils.spin_operators[spin]['Sy'])  # S_N^y S_1^y term  
         self._matrix += Delta*coeff*self._cyclical_term(utils.spin_operators[spin]['Sz']) # Δ (S_N^z S_1^z) term
