@@ -40,13 +40,13 @@ class Hamiltonian:
     def kroned_identity(self, index) -> csr_matrix:        
         return self._kroned_identities[index]
 
-    def _build_term(self, i, operator) -> csr_matrix:
+    def _build_term(self, i : int, operator : csr_matrix) -> csr_matrix:
         return csr_matrix(kron(
         kron(self.kroned_identity(i), operator),
         kron(operator, self.kroned_identity(self.n - 2 - i))
     ))
 
-    def _cyclical_term(self, operator) -> csr_matrix:
+    def _cyclical_term(self, operator : csr_matrix) -> csr_matrix:
         return csr_matrix(kron(
             operator, kron(
             self.kroned_identity(self.n - 2),
@@ -179,15 +179,12 @@ class BilinearBiquadratic(Hamiltonian):
             Y_term = self._build_term(l, utils.spin_operators[spin]['Sy'])
             Z_term = self._build_term(l, utils.spin_operators[spin]['Sz'])
 
+            SdotS = X_term + Y_term + Z_term 
             # linear and pure quadratic terms
-            self._matrix += arg1*X_term + arg2*(X_term @ X_term)    # S_l^x S_{l+1}^x term
-            self._matrix += arg1*Y_term + arg2*(Y_term @ Y_term)   # S_l^y S_{l+1}^y term
-            self._matrix += arg1*Z_term + arg2*(Z_term @ Z_term)   # S_l^z S_{l+1}^z term
-            
+            self._matrix += arg1*SdotS
+
             # Mixed quadratic terms
-            self._matrix += arg2*(X_term @ Y_term + Y_term @ X_term) 
-            self._matrix += arg2*(X_term @ Z_term + Z_term @ X_term)
-            self._matrix += arg2*(Y_term @ Z_term + Z_term @ Y_term)
+            self._matrix += arg2*(SdotS @ SdotS)
 
 
 
@@ -196,14 +193,11 @@ class BilinearBiquadratic(Hamiltonian):
         Y_term = self._cyclical_term(utils.spin_operators[spin]['Sy'])
         Z_term = self._cyclical_term(utils.spin_operators[spin]['Sz'])
 
-        self._matrix += arg1*X_term + arg2*(X_term @ X_term) # S_N^x S_1^x term
-        self._matrix += arg1*Y_term + arg2*(Y_term @ Y_term) # S_N^y S_1^y term
-        self._matrix += arg1*Z_term + arg2*(Z_term @ Z_term) # S_N^z S_1^z term
-
-        self._matrix += arg2*(X_term @ Y_term + Y_term @ X_term) 
-        self._matrix += arg2*(X_term @ Z_term + Z_term @ X_term)
-        self._matrix += arg2*(Y_term @ Z_term + Z_term @ Y_term)
-
+        SdotS = X_term + Y_term + Z_term
+        self._matrix += arg1*SdotS
+        
+        # Mixed quadratic terms
+        self._matrix += arg2*(SdotS @ SdotS)
     @property
     def theta(self):
         return self._theta
@@ -212,3 +206,4 @@ class BilinearBiquadratic(Hamiltonian):
         return super().__str__()  +  \
         f"""Bilinear Biquadratic Chain.,\n\nHamiltonian properties:
         θ = {self.theta}\n"""
+        
