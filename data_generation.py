@@ -7,6 +7,7 @@ from tqdm import tqdm
 from timeit import default_timer as timer
 from datetime import datetime
 from sys import argv
+import pandas as pd
 import os
 
 def generate_data(N, n_cores, to_generate = ['H1', 'H2', 'H3']):
@@ -24,7 +25,7 @@ def generate_data(N, n_cores, to_generate = ['H1', 'H2', 'H3']):
     Deltas = np.arange(-1.5,2.5, 0.05)
     H2_params = it.product([N], Deltas, deltas, [corr], [n_sup])
 
-    thetas = np.arange(0,2*np.pi,0.001*np.pi)
+    thetas = pd.read_csv("data/thetas.csv", header=None).values.flatten()
     H3_params = it.product([N], thetas, [corr], [n_sup])
 
     ##########################################
@@ -104,7 +105,6 @@ def gen_H2(args):
     line.append(np.real(np.vdot(gstate, corr.prodSix @ gstate)))
     line.append(np.real(np.vdot(gstate, corr.prodSiy @ gstate)))
     line.append(np.real(np.vdot(gstate, corr.prodSiz @ gstate)))
-
     return "\n"+", ".join([str(i) for i in line])
 
 def gen_H3(args):
@@ -124,6 +124,7 @@ def gen_H3(args):
         line.append(np.real(np.vdot(gstate, corr.prodSix @ gstate)))
         line.append(np.real(np.vdot(gstate, corr.prodSiy @ gstate)))
         line.append(np.real(np.vdot(gstate, corr.prodSiz @ gstate)))            
+
         return "\n"+", ".join([str(i) for i in line])
 
 if __name__ == "__main__":    
