@@ -1,5 +1,7 @@
 brincadeira/
 __pycache__
-data/
-data_1/
 id_ed25519
+.vscode/
+__marimo__/
+pyproject.toml
+.gitignore
