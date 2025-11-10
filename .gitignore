@@ -5,3 +5,5 @@ id_ed25519
 __marimo__/
 pyproject.toml
 .gitignore
+data/
+data/theoretical

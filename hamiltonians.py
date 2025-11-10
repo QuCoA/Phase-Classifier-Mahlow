@@ -207,7 +207,7 @@ class BilinearBiquadratic(Hamiltonian):
             Spin value of the system.
         """
         super().__init__(n, spin)
-        self._theta = theta
+        self._theta = np.pi * theta
 
         # Build the Hamiltonian matrix for the non-cyclic terms
         arg1 = np.cos(theta)

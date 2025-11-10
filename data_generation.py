@@ -10,6 +10,8 @@ from sys import argv
 import pandas as pd
 import os
 
+path = "data"
+
 
 def generate_data(N, n_cores, to_generate=["H1", "H2", "H3"]):
     T = [-1.0, -1.0, -1.0]
@@ -18,14 +20,22 @@ def generate_data(N, n_cores, to_generate=["H1", "H2", "H3"]):
 
     ############### PARAMETERS ###############
 
-    Jzs, Ds = np.arange(-4, 4.1, 0.1, ), np.arange(-4, 4, 0.1)
+    Jzs, Ds = (
+        np.arange(
+            -4,
+            4,
+            0.1,
+        ),
+        np.arange(-4, 4, 0.1),
+    )
     H1_params = it.product([N], Jzs, Ds, [corr], [n_sup])
 
-    deltas = np.arange(0, 1.01, 0.0125)
-    Deltas = np.arange(-1.5, 2.51, 0.05)
+    deltas = np.arange(0, 1, 0.0125)
+    Deltas = np.arange(-1.5, 2.5, 0.05)
     H2_params = it.product([N], Deltas, deltas, [corr], [n_sup])
 
-    thetas = pd.read_csv("data/thetas.csv", header=None).values.flatten()
+    thetas = np.arange(0, 2, 0.0005)
+
     H3_params = it.product([N], thetas, [corr], [n_sup])
 
     ##########################################
@@ -36,13 +46,13 @@ def generate_data(N, n_cores, to_generate=["H1", "H2", "H3"]):
         with mp.Pool(n_cores) as pool:
             lines = list(
                 tqdm(
-                    pool.imap(gen_H1, H1_params),
+                    pool.imap(gen_H1_corr, H1_params),
                     total=len(Jzs) * len(Ds),
                     desc="Calculating H1 correlations",
                 )
             )
 
-        with open(f"data/H1/N={N}.csv", "w") as fh:
+        with open(f"{path}/H1/N={N}.csv", "w") as fh:
             fh.write(
                 "Jz, D, "
                 + ", ".join(
@@ -61,12 +71,12 @@ def generate_data(N, n_cores, to_generate=["H1", "H2", "H3"]):
         with mp.Pool(n_cores) as pool:
             lines = list(
                 tqdm(
-                    (pool.imap(gen_H2, H2_params)),
+                    (pool.imap(gen_H2_corr, H2_params)),
                     total=len(Deltas) * len(deltas),
                     desc="Calculating H2 correlations",
                 )
             )
-        with open(f"data/H2/N={N}.csv", "w") as fh:
+        with open(f"{path}/H2/N={N}.csv", "w") as fh:
             fh.write(
                 "Delta, delta, "
                 + ", ".join(
@@ -85,13 +95,13 @@ def generate_data(N, n_cores, to_generate=["H1", "H2", "H3"]):
         with mp.Pool(n_cores) as pool:
             lines = list(
                 tqdm(
-                    pool.imap(gen_H3, H3_params),
+                    pool.imap(gen_H3_corr, H3_params),
                     total=len(thetas),
                     desc="Calculating H3 correlations",
                 )
             )
             pass
-        with open(f"data/H3/N={N}.csv", "w") as fh:
+        with open(f"{path}/H3/N={N}.csv", "w") as fh:
             fh.write(
                 "theta, -1, "
                 + ", ".join(
@@ -107,7 +117,7 @@ def generate_data(N, n_cores, to_generate=["H1", "H2", "H3"]):
     return T
 
 
-def gen_H1(args):
+def gen_H1_corr(args):
     N, Jz, D, corr, n_sup = args
     line = [Jz, D]
     try:
@@ -128,7 +138,7 @@ def gen_H1(args):
     return "\n" + ", ".join([str(i) for i in line])
 
 
-def gen_H2(args):
+def gen_H2_corr(args):
     N, Delta, delta, corr, n_sup = args
     line = [Delta, delta]
     try:
@@ -148,7 +158,7 @@ def gen_H2(args):
     return "\n" + ", ".join([str(i) for i in line])
 
 
-def gen_H3(args):
+def gen_H3_corr(args):
     N, theta, corr, n_sup = args
     line = [theta, -1]
 
