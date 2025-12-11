@@ -13,7 +13,7 @@ class Correlators:
         _n (int): Number of spins in the chain.
         _spin (str): Spin value as a string (e.g., "1" for spin-1).
         _S1Six_array (list): List of S1·Si correlation operators for Sx.
-        _S1Siy_array (list): List of S1·Si correlation operators for Sy.
+        _S1 Siy_array (list): List of S1·Si correlation operators for Sy.
         _S1Siz_array (list): List of S1·Si correlation operators for Sz.
         _prodSix (csr_matrix): Product operator for Sx on all sites.
         _prodSiy (csr_matrix): Product operator for Sy on all sites.

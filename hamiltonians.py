@@ -148,25 +148,33 @@ class XXZUniaxialSingleIonAnisotropy(Hamiltonian):
             self._matrix += J * self._build_term(
                 l, utils.spin_operators[spin]["Sx"]
             )  # S_l^x S_{l+1}^x term
+            
             self._matrix += J * self._build_term(
                 l, utils.spin_operators[spin]["Sy"]
             )  # S_l^y S_{l+1}^y term
+            
             self._matrix += Jz * self._build_term(
                 l, utils.spin_operators[spin]["Sz"]
             )  # S_l^z S_{l+1}^z term
+        
             self._matrix += D * self._build_anisotropy(
                 l, utils.spin_operators[spin]["Sz2"]
             )  # S_l^z2 term
+        
+        
         # Cyclical terms
         self._matrix += J * self._cyclical_term(
             utils.spin_operators[spin]["Sx"]
         )  # S_N^x S_1^x term
+        
         self._matrix += J * self._cyclical_term(
             utils.spin_operators[spin]["Sy"]
         )  # S_N^y S_1^y term
+        
         self._matrix += Jz * self._cyclical_term(
             utils.spin_operators[spin]["Sz"]
         )  # S_N^z S_1^z term
+        
         self._matrix += D * self._build_anisotropy(
             n - 1, utils.spin_operators[spin]["Sz2"]
         )  # S_l^z2 term
